@@ -1,14 +1,15 @@
 package org.launchcode.controllers;
 
+import org.launchcode.models.Cheese;
+import org.launchcode.models.CheeseData;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
+import sun.misc.Request;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
+
 
 /**
  * Created by LaunchCode
@@ -17,13 +18,11 @@ import java.util.Map;
 @RequestMapping("cheese")
 public class CheeseController {
 
-    static HashMap<String, String> cheeses = new HashMap<>();
-
     // Request path: /cheese
     @RequestMapping(value = "")
     public String index(Model model) {
 
-        model.addAttribute("cheeses", cheeses);
+        model.addAttribute("cheeses", CheeseData.getAll());
         model.addAttribute("title", "My Cheeses");
 
         return "cheese/index";
@@ -36,25 +35,43 @@ public class CheeseController {
     }
 
     @RequestMapping(value = "add", method = RequestMethod.POST)
-    public String processAddCheeseForm(@RequestParam String cheeseName,
-        @RequestParam String cheeseDescription) {
-        cheeses.put(cheeseName, cheeseDescription);
+    public String processAddCheeseForm(@ModelAttribute Cheese newCheese) {
+        CheeseData.add(newCheese);
         return "redirect:";
     }
 
     @RequestMapping(value = "remove", method = RequestMethod.GET)
     public String displayRemoveCheeseForm(Model model) {
-        model.addAttribute("cheeses", cheeses.keySet());
+        model.addAttribute("cheeses", CheeseData.getAll());
         model.addAttribute("title", "Remove Cheese");
         return "cheese/remove";
     }
 
     @RequestMapping(value = "remove", method = RequestMethod.POST)
-    public String processRemoveCheeseForm(@RequestParam ArrayList<String> cheese) {
+    public String processRemoveCheeseForm(@RequestParam int[] cheeseIds) {
 
-        for (String aCheese : cheese) {
-            cheeses.remove(aCheese);
+        for (int cheeseId : cheeseIds) {
+            CheeseData.remove(cheeseId);
         }
+
+        return "redirect:";
+    }
+
+    @RequestMapping(value = "edit/{cheeseId}", method = RequestMethod.GET)
+    public String displayEditForm(Model model, @PathVariable int cheeseId){
+        Cheese editCheese = CheeseData.getById(cheeseId);
+        model.addAttribute("cheese", editCheese);
+        model.addAttribute("title", "Edit Cheese " + editCheese.getName() + " (ID=" + cheeseId +")");
+        return "cheese/edit";
+    }
+
+    @RequestMapping(value = "edit", method = RequestMethod.POST)
+    public String processEditForm(@RequestParam int cheeseId,
+                                  @RequestParam String name,
+                                  @RequestParam String description){
+        Cheese editCheese = CheeseData.getById(cheeseId);
+        editCheese.setName(name);
+        editCheese.setDescription(description);
 
         return "redirect:";
     }
